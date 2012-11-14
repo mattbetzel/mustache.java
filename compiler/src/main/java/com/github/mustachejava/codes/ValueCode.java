@@ -17,6 +17,7 @@ public class ValueCode extends DefaultCode {
   private final boolean encoded;
   private final DefaultMustacheFactory cf;
   private final ExecutorService les;
+  private final boolean failFast;
 
   @Override
   public void identity(Writer writer) {
@@ -39,11 +40,12 @@ public class ValueCode extends DefaultCode {
     }
   }
 
-  public ValueCode(TemplateContext tc, DefaultMustacheFactory cf, String variable, boolean encoded) {
+  public ValueCode(TemplateContext tc, DefaultMustacheFactory cf, String variable, boolean encoded, boolean failFast) {
     super(tc, cf.getObjectHandler(), null, variable, "");
     this.cf = cf;
     this.encoded = encoded;
     les = cf.getExecutorService();
+    this.failFast = failFast;
   }
 
   @Override
@@ -61,6 +63,11 @@ public class ValueCode extends DefaultCode {
       } catch (Exception e) {
         throw new MustacheException("Failed to get value for " + name + " at line " + tc.file() + ":" + tc.line(), e);
       }
+    }
+    else {
+        if (this.failFast) {
+            throw new MustacheException("Failed to get value for [" + name + "] at line " + tc.file() + ":" + tc.line());
+        }
     }
     return super.execute(writer, scopes);
   }

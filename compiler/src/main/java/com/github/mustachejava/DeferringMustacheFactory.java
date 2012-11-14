@@ -67,7 +67,7 @@ public class DeferringMustacheFactory extends DefaultMustacheFactory {
   @Override
   public MustacheVisitor createMustacheVisitor() {
     final AtomicLong id = new AtomicLong(0);
-    return new DefaultMustacheVisitor(this) {
+    return new DefaultMustacheVisitor(this, this.failFast) {
       @Override
       public void partial(TemplateContext templateContext, final String variable) {
         TemplateContext partialTC = new TemplateContext("{{", "}}", templateContext.file(),

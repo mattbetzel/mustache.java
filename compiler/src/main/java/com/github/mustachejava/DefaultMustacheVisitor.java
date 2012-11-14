@@ -16,6 +16,7 @@ public class DefaultMustacheVisitor implements MustacheVisitor {
   protected static Logger logger = Logger.getLogger(DefaultMustacheVisitor.class.getSimpleName());
 
   private static final Code EOF = new DefaultCode();
+  protected boolean failFast = false;
 
   protected final List<Code> list = new LinkedList<Code>();
   private final Map<String, PragmaHandler> handlers = new HashMap<String, PragmaHandler>() {{
@@ -34,8 +35,9 @@ public class DefaultMustacheVisitor implements MustacheVisitor {
 
   protected DefaultMustacheFactory cf;
 
-  public DefaultMustacheVisitor(DefaultMustacheFactory cf) {
+  public DefaultMustacheVisitor(DefaultMustacheFactory cf, boolean failFast) {
     this.cf = cf;
+      this.failFast = failFast;
   }
 
   public void addPragmaHandler(String pragma, PragmaHandler handler) {
@@ -70,7 +72,7 @@ public class DefaultMustacheVisitor implements MustacheVisitor {
 
   @Override
   public void value(TemplateContext templateContext, final String variable, boolean encoded) {
-    list.add(new ValueCode(templateContext, cf, variable, encoded));
+    list.add(new ValueCode(templateContext, cf, variable, encoded, this.failFast));
   }
 
   @Override

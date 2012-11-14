@@ -2,6 +2,7 @@ package com.github.mustachejava;
 
 import com.github.mustachejava.codegen.CodegenMustacheFactory;
 import org.codehaus.jackson.JsonNode;
+import org.junit.Ignore;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -9,6 +10,7 @@ import java.io.StringReader;
 /**
  * Specification tests
  */
+@Ignore
 public class CodegenSpecTest extends SpecTest {
   @Override
   protected DefaultMustacheFactory createMustacheFactory(final JsonNode test) {

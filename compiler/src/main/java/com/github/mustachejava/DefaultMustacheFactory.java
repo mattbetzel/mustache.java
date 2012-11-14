@@ -44,12 +44,18 @@ public class DefaultMustacheFactory implements MustacheFactory {
 
   private final String resourceRoot;
   private final File fileRoot;
+  protected boolean failFast = false;
 
   protected ListeningExecutorService les;
 
   public DefaultMustacheFactory() {
-    this.resourceRoot = null;
-    this.fileRoot = null;
+      this(false);
+  }
+
+  public DefaultMustacheFactory(boolean failFast) {
+      this.resourceRoot = null;
+      this.fileRoot = null;
+      this.failFast = failFast;
   }
 
   /**
@@ -79,7 +85,7 @@ public class DefaultMustacheFactory implements MustacheFactory {
 
   @Override
   public MustacheVisitor createMustacheVisitor() {
-    return new DefaultMustacheVisitor(this);
+    return new DefaultMustacheVisitor(this, this.failFast);
   }
 
   @Override
