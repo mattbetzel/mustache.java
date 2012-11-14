@@ -19,6 +19,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
+import static com.github.mustachejavabenchmarks.BenchmarkTest.skip;
+
 /**
  * Tests for the compiler.
  * <p/>
@@ -46,7 +48,19 @@ public class InterpreterTest extends TestCase {
     assertEquals(getContents(root, "simple.txt"), sw.toString());
   }
 
-  protected DefaultMustacheFactory createMustacheFactory() {
+    public void testMissingValue() throws IOException {
+        try {
+            DefaultMustacheFactory mb = new DefaultMustacheFactory(root, true);
+            final Mustache parse = mb.compile("simple.html");
+            parse.execute(new StringWriter(), new Object());
+            fail("Should have caught MustacheException");
+        }
+        catch (MustacheException e) {
+            // success
+        }
+    }
+
+    protected DefaultMustacheFactory createMustacheFactory() {
     return new DefaultMustacheFactory(root);
   }
 

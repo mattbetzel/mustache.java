@@ -82,38 +82,38 @@ public class JsonInterpreterTest extends TestCase {
     return new DefaultMustacheFactory(root);
   }
 
-//  public void testMultithreaded() throws IOException, InterruptedException {
-//    if (skip()) return;
-//    final Mustache parse = getMustache();
-//    final Object parent = getScope();
-//
-//    final AtomicInteger runs = new AtomicInteger(0);
-//    ExecutorService es = Executors.newCachedThreadPool();
-//    int range = (int) Math.round(Runtime.getRuntime().availableProcessors() * 1.5 + 1);
-//    for (int threads = 1; threads < range; threads++) {
-//      final Semaphore semaphore = new Semaphore(threads);
-//      {
-//        long start = System.currentTimeMillis();
-//        while (true) {
-//          semaphore.acquire();
-//          es.submit(new Runnable() {
-//            @Override
-//            public void run() {
-//              parse.execute(new NullWriter(), new Object[] { parent });
-//              runs.incrementAndGet();
-//              semaphore.release();
-//            }
-//          });
-//          if (System.currentTimeMillis() - start > TIME * 1000) {
-//            break;
-//          }
-//        }
-//        System.out.println("NullWriter Serial with " + threads + " threads: " + runs.intValue() / TIME + "/s " + " per thread: " + (runs.intValue() / TIME / threads));
-//        runs.set(0);
-//        Thread.sleep(100);
-//      }
-//    }
-//  }
+  public void testMultithreaded() throws IOException, InterruptedException {
+    if (skip()) return;
+    final Mustache parse = getMustache();
+    final Object parent = getScope();
+
+    final AtomicInteger runs = new AtomicInteger(0);
+    ExecutorService es = Executors.newCachedThreadPool();
+    int range = (int) Math.round(Runtime.getRuntime().availableProcessors() * 1.5 + 1);
+    for (int threads = 1; threads < range; threads++) {
+      final Semaphore semaphore = new Semaphore(threads);
+      {
+        long start = System.currentTimeMillis();
+        while (true) {
+          semaphore.acquire();
+          es.submit(new Runnable() {
+            @Override
+            public void run() {
+              parse.execute(new NullWriter(), new Object[] { parent });
+              runs.incrementAndGet();
+              semaphore.release();
+            }
+          });
+          if (System.currentTimeMillis() - start > TIME * 1000) {
+            break;
+          }
+        }
+        System.out.println("NullWriter Serial with " + threads + " threads: " + runs.intValue() / TIME + "/s " + " per thread: " + (runs.intValue() / TIME / threads));
+        runs.set(0);
+        Thread.sleep(100);
+      }
+    }
+  }
 
   private Object getScope() throws IOException {
     MappingJsonFactory jf = new MappingJsonFactory();
