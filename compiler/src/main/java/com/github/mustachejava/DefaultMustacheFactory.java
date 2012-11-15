@@ -44,7 +44,7 @@ public class DefaultMustacheFactory implements MustacheFactory {
 
   private final String resourceRoot;
   private final File fileRoot;
-  protected boolean failFast = false;
+  protected final boolean failFast;
 
   protected ListeningExecutorService les;
 

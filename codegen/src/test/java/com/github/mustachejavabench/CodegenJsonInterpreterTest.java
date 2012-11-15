@@ -12,7 +12,7 @@ import org.junit.Ignore;
  * Date: May 3, 2010
  * Time: 10:23:54 AM
  */
-@Ignore
+@Ignore // This never compiled, ignoring for now so we can get a clean build.
 public class CodegenJsonInterpreterTest extends JsonInterpreterTest {
   @Override
   protected DefaultMustacheFactory createMustacheFactory() {
