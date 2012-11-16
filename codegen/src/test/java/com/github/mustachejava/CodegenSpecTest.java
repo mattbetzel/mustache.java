@@ -10,7 +10,7 @@ import java.io.StringReader;
 /**
  * Specification tests
  */
-@Ignore // This never compiled, ignoring for now so we can get a clean build.
+@Ignore("This never compiled, ignoring for now so we can get a clean build.")
 public class CodegenSpecTest extends SpecTest {
   @Override
   protected DefaultMustacheFactory createMustacheFactory(final JsonNode test) {

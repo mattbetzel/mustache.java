@@ -17,7 +17,7 @@ import static junit.framework.Assert.assertFalse;
 /**
  * Specification tests
  */
-@Ignore // This never compiled, ignoring for now so we can get a clean build.
+@Ignore("This never compiled, ignoring for now so we can get a clean build.")
 public class SpecTest {
 
   private JsonFactory jf = new MappingJsonFactory();
