@@ -25,12 +25,24 @@ public class DeferringMustacheFactory extends DefaultMustacheFactory {
   public DeferringMustacheFactory() {
   }
 
+  public DeferringMustacheFactory(boolean failFast) {
+    super(failFast);
+  }
+
   public DeferringMustacheFactory(String resourceRoot) {
     super(resourceRoot);
   }
 
+  public DeferringMustacheFactory(String resourceRoot, boolean failFast) {
+    super(resourceRoot, failFast);
+  }
+
   public DeferringMustacheFactory(File fileRoot) {
     super(fileRoot);
+  }
+
+  public DeferringMustacheFactory(File fileRoot, boolean failFast) {
+    super(fileRoot, failFast);
   }
 
   private static class Deferral {
@@ -67,7 +79,7 @@ public class DeferringMustacheFactory extends DefaultMustacheFactory {
   @Override
   public MustacheVisitor createMustacheVisitor() {
     final AtomicLong id = new AtomicLong(0);
-    return new DefaultMustacheVisitor(this) {
+    return new DefaultMustacheVisitor(this, this.failFast) {
       @Override
       public void partial(TemplateContext templateContext, final String variable) {
         TemplateContext partialTC = new TemplateContext("{{", "}}", templateContext.file(),

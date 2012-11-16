@@ -30,13 +30,16 @@ public class CapturingMustacheVisitor extends DefaultMustacheVisitor {
   }
 
   public CapturingMustacheVisitor(DefaultMustacheFactory cf, Captured captured) {
-    super(cf);
+    this(cf, captured, false);
+  }
+  public CapturingMustacheVisitor(DefaultMustacheFactory cf, Captured captured, boolean failFast) {
+    super(cf, failFast);
     this.captured = captured;
   }
 
   @Override
   public void value(TemplateContext tc, String variable, boolean encoded) {
-    list.add(new ValueCode(tc, cf, variable, encoded) {
+    list.add(new ValueCode(tc, cf, variable, encoded, this.failFast) {
       @Override
       public Object get(Object[] scopes) {
         Object o = super.get(scopes);

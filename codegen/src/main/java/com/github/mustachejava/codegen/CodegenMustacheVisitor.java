@@ -7,7 +7,7 @@ import java.io.Writer;
 
 public class CodegenMustacheVisitor extends DefaultMustacheVisitor {
   public CodegenMustacheVisitor(DefaultMustacheFactory mf) {
-    super(mf);
+    super(mf, false);
   }
 
   @Override

@@ -44,12 +44,18 @@ public class DefaultMustacheFactory implements MustacheFactory {
 
   private final String resourceRoot;
   private final File fileRoot;
+  protected final boolean failFast;
 
   protected ListeningExecutorService les;
 
   public DefaultMustacheFactory() {
-    this.resourceRoot = null;
-    this.fileRoot = null;
+      this(false);
+  }
+
+  public DefaultMustacheFactory(boolean failFast) {
+      this.resourceRoot = null;
+      this.fileRoot = null;
+      this.failFast = failFast;
   }
 
   /**
@@ -57,29 +63,47 @@ public class DefaultMustacheFactory implements MustacheFactory {
    * @param resourceRoot
    */
   public DefaultMustacheFactory(String resourceRoot) {
-    if (!resourceRoot.endsWith("/")) resourceRoot += "/";
-    this.resourceRoot = resourceRoot;
-    this.fileRoot = null;
+    this(resourceRoot, false);
   }
+
+    /**
+     * Use the classpath to resolve mustache templates.
+     * @param resourceRoot
+     */
+    public DefaultMustacheFactory(String resourceRoot, boolean failFast) {
+        if (!resourceRoot.endsWith("/")) resourceRoot += "/";
+        this.resourceRoot = resourceRoot;
+        this.fileRoot = null;
+        this.failFast = failFast;
+    }
 
   /**
    * Use the file system to resolve mustache templates.
    * @param fileRoot
    */
   public DefaultMustacheFactory(File fileRoot) {
-    if (!fileRoot.exists()) {
-      throw new MustacheException(fileRoot + " does not exist");
-    }
-    if (!fileRoot.isDirectory()) {
-      throw new MustacheException(fileRoot + " is not a directory");
-    }
-    this.fileRoot = fileRoot;
-    this.resourceRoot = null;
+    this(fileRoot, false);
+  }
+
+  /**
+   * Use the file system to resolve mustache templates.
+   * @param fileRoot
+   */
+  public DefaultMustacheFactory(File fileRoot, boolean failFast) {
+      if (!fileRoot.exists()) {
+          throw new MustacheException(fileRoot + " does not exist");
+      }
+      if (!fileRoot.isDirectory()) {
+          throw new MustacheException(fileRoot + " is not a directory");
+      }
+      this.fileRoot = fileRoot;
+      this.resourceRoot = null;
+      this.failFast = failFast;
   }
 
   @Override
   public MustacheVisitor createMustacheVisitor() {
-    return new DefaultMustacheVisitor(this);
+    return new DefaultMustacheVisitor(this, this.failFast);
   }
 
   @Override

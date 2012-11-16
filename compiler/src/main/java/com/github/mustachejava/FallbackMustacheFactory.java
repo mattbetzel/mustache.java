@@ -22,22 +22,44 @@ public class FallbackMustacheFactory extends DefaultMustacheFactory {
 	public FallbackMustacheFactory(String resourceRoot, String fallbackRoot) {
 		this(new String[] {resourceRoot, fallbackRoot});
 	}
-	
+
+    /** Simple constructor for a fallback Mustache.java factory.
+     *
+     * @param resourceRoot normal resource root
+     * @param fallbackRoot fallback alternative root
+     */
+    public FallbackMustacheFactory(String resourceRoot, String fallbackRoot, boolean failFast) {
+        this(new String[] {resourceRoot, fallbackRoot}, failFast);
+    }
+
 	/** Simple constructor for a fallback Mustache.java factory.
 	 * 
-	 * @param resourceRoot normal resource root
+	 * @param fileRoot normal file root
 	 * @param fallbackRoot fallback alternative root
 	 */
 	public FallbackMustacheFactory(File fileRoot, File fallbackRoot) {
 		this(new File[] {fileRoot, fallbackRoot});
 	}
 
+    /** Simple constructor for a fallback Mustache.java factory.
+     *
+     * @param fileRoot normal file root
+     * @param fallbackRoot fallback alternative root
+     */
+    public FallbackMustacheFactory(File fileRoot, File fallbackRoot, boolean failFast) {
+        this(new File[] {fileRoot, fallbackRoot}, failFast);
+    }
+
+    public FallbackMustacheFactory(Object[] resourceRoots) {
+        this(resourceRoots, false);
+    }
+
 	/** Generic constructor for a fallback Mustache.java factory.
 	 * 
 	 * @param resourceRoots array of fallback resource roots as String or File
 	 */
-	public FallbackMustacheFactory(Object[] resourceRoots) {
-		super();
+	public FallbackMustacheFactory(Object[] resourceRoots, boolean failFast) {
+		super(failFast);
 		
 		for(Object resourceObj : resourceRoots) {
 			if(resourceObj instanceof String) {  // for String
