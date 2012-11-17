@@ -15,7 +15,7 @@
   <packaging>pom</packaging>
 
   <name>mustache.java</name>
-  <url>http://github.com/spullara/mustache.java</url>
+  <url>http://github.com/opower/mustache.java</url>
 
   <developers>
     <developer>
@@ -42,19 +42,24 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:git@github.com:spullara/mustache.java.git</connection>
-    <developerConnection>scm:git:git@github.com:spullara/mustache.java.git</developerConnection>
-    <url>scm:git:git@github.com:spullara/mustache.java.git</url>
+    <connection>scm:git:git@github.com:opower/mustache.java.git</connection>
+    <developerConnection>scm:git:git@github.com:opower/mustache.java.git</developerConnection>
+    <url>scm:git:git@github.com:opower/mustache.java.git</url>
   </scm>
 
   <distributionManagement>
     <repository>
-      <id>sonatype-nexus-staging</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+      <id>secure_opower</id>
+      <name>Secure OPOWER Repository</name>
+      <url>https://nexus.va.opower.it/nexus/content/repositories/releases</url>
+      <layout>default</layout>
     </repository>
     <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <uniqueVersion>true</uniqueVersion>
+      <id>secure_opower_snapshots</id>
+      <name>Secure OPOWER Repository (Snapshots)</name>
+      <url>https://nexus.va.opower.it/nexus/content/repositories/snapshots</url>
+      <layout>default</layout>
     </snapshotRepository>
   </distributionManagement>
 
