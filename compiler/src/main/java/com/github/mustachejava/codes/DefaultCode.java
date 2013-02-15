@@ -4,6 +4,8 @@ import com.github.mustachejava.*;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Simplest possible code implementaion with some default shared behavior
@@ -19,20 +21,33 @@ public class DefaultCode implements Code, Cloneable {
   protected final String type;
   protected final boolean returnThis;
   protected final Binding binding;
+  protected final DefaultMustacheFactory df;
 
   public Object clone() {
+    Set<Code> seen = new HashSet<Code>();
+    seen.add(this);
+    return clone(seen);
+  }
+
+  public Object clone(Set<Code> seen) {
     try {
       DefaultCode code = (DefaultCode) super.clone();
       Code[] codes = code.getCodes();
       if (codes != null) {
         codes = codes.clone();
         for (int i = 0; codes != null && i < codes.length; i++) {
-          codes[i] = (Code) codes[i].clone();
+          if (seen.add(codes[i])) {
+            codes[i] = (Code) codes[i].clone(seen);
+            seen.remove(codes[i]);
+          }
         }
         code.setCodes(codes);
       }
       if (mustache != null) {
-        code.mustache = (Mustache) mustache.clone();
+        if (seen.add(mustache)) {
+          code.mustache = (Mustache) mustache.clone(seen);
+          seen.remove(mustache);
+        }
       }
       return code;
     } catch (CloneNotSupportedException e) {
@@ -44,8 +59,9 @@ public class DefaultCode implements Code, Cloneable {
     this(null, null, null, null, null);
   }
 
-  public DefaultCode(TemplateContext tc, ObjectHandler oh, Mustache mustache, String name, String type) {
-    this.oh = oh;
+  public DefaultCode(TemplateContext tc, DefaultMustacheFactory df, Mustache mustache, String name, String type) {
+    this.df = df;
+    this.oh = df == null ? null : df.getObjectHandler();
     this.mustache = mustache;
     this.type = type;
     this.name = name;
@@ -74,7 +90,8 @@ public class DefaultCode implements Code, Cloneable {
 
   public Object get(Object[] scopes) {
     if (returnThis) {
-      return scopes[scopes.length - 1];
+      int length = scopes == null ? 0 : scopes.length;
+      return length == 0 ? null : scopes[length - 1];
     }
     return binding.get(scopes);
   }
@@ -146,6 +163,9 @@ public class DefaultCode implements Code, Cloneable {
       appended = text;
     } else {
       appended = appended + text;
+    }
+    if (df != null) {
+      appended = df.filterText(appended);
     }
   }
 

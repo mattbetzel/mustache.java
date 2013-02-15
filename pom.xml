@@ -3,7 +3,7 @@
 
   <groupId>com.github.spullara.mustache.java</groupId>
   <artifactId>mustache.java</artifactId>
-  <version>0.8.8-OPOWER</version>
+  <version>0.8.10-OPOWER-SNAPSHOT</version>
   <description>Implementation of the Mustache language in Java.</description>
 
   <modules>

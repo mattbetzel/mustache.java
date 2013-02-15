@@ -12,13 +12,11 @@ import java.util.concurrent.ExecutorService;
 
 public class IterableCode extends DefaultCode implements Iteration {
 
-  private final DefaultMustacheFactory cf;
   private final ExecutorService les;
 
-  public IterableCode(TemplateContext tc, DefaultMustacheFactory cf, Mustache mustache, String variable) {
-    super(tc, cf.getObjectHandler(), mustache, variable, "#");
-    this.cf = cf;
-    les = cf.getExecutorService();
+  public IterableCode(TemplateContext tc, DefaultMustacheFactory df, Mustache mustache, String variable) {
+    super(tc, df, mustache, variable, "#");
+    les = df.getExecutorService();
   }
 
   @Override
@@ -87,24 +85,29 @@ public class IterableCode extends DefaultCode implements Iteration {
   protected Writer handleFunction(Writer writer, Function function, Object[] scopes) {
     StringWriter sw = new StringWriter();
     runIdentity(sw);
-    Object newtemplate = function.apply(sw.toString());
-    if (newtemplate != null) {
-      if (function instanceof TemplateFunction) {
+    if (function instanceof TemplateFunction) {
+      Object newtemplate = function.apply(sw.toString());
+      if (newtemplate != null) {
         String templateText = newtemplate.toString();
         writer = writeTemplate(writer, templateText, scopes);
-      } else {
-        try {
-          writer.write(newtemplate.toString());
-        } catch (IOException e) {
-          throw new MustacheException("Failed to write function result", e);
+      }
+    } else {
+      try {
+        StringWriter capture = new StringWriter();
+        writeTemplate(capture, sw.toString(), scopes).close();
+        Object apply = function.apply(capture.toString());
+        if (apply != null) {
+          writer.write(apply.toString());
         }
+      } catch (IOException e) {
+        throw new MustacheException("Failed to write function result", e);
       }
     }
     return writer;
   }
 
   protected Writer writeTemplate(Writer writer, String templateText, Object[] scopes) {
-    return cf.getFragment(new FragmentKey(tc, templateText)).execute(writer, scopes);
+    return df.getFragment(new FragmentKey(tc, templateText)).execute(writer, scopes);
   }
 
   protected Writer execute(Writer writer, Object resolve, Object[] scopes) {

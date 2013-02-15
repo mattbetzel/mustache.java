@@ -1,15 +1,23 @@
 package com.github.mustachejava;
 
+import com.github.mustachejava.reflect.SimpleObjectHandler;
 import com.github.mustachejava.util.CapturingMustacheVisitor;
 import com.github.mustachejavabenchmarks.JsonCapturer;
 import com.github.mustachejavabenchmarks.JsonInterpreterTest;
+import com.google.common.base.Function;
 import junit.framework.TestCase;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.MappingJsonFactory;
 
-import javax.annotation.Nullable;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +26,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.github.mustachejavabenchmarks.BenchmarkTest.skip;
 
@@ -48,19 +57,74 @@ public class InterpreterTest extends TestCase {
     assertEquals(getContents(root, "simple.txt"), sw.toString());
   }
 
-    public void testMissingValue() throws IOException {
-        try {
-            DefaultMustacheFactory mb = new DefaultMustacheFactory(root, true);
-            final Mustache parse = mb.compile("simple.html");
-            parse.execute(new StringWriter(), new Object());
-            fail("Should have caught MustacheException");
-        }
-        catch (MustacheException e) {
-            // success
-        }
+  public void testMissingValue() throws IOException {
+    try {
+      DefaultMustacheFactory mb = new DefaultMustacheFactory(root, true);
+      final Mustache parse = mb.compile("simple.html");
+      parse.execute(new StringWriter(), new Object());
+      fail("Should have caught MustacheException");
     }
+    catch (MustacheException e) {
+      // success
+    }
+  }
 
-    protected DefaultMustacheFactory createMustacheFactory() {
+  public void testSimpleFiltered() throws MustacheException, IOException, ExecutionException, InterruptedException {
+    MustacheFactory c = new DefaultMustacheFactory(root) {
+      /**
+       * Override this method to apply any filtering to text that will appear
+       * verbatim in the output template.
+       *
+       * @param appended
+       * @return
+       */
+      @Override
+      public String filterText(String appended) {
+        // Remove duplicate spaces, leading spaces and trailing spaces
+        return appended.replaceAll("[ ]+", " ").replaceAll("[ ]?\n[ ]?", "\n");
+      }
+    };
+    Mustache m = c.compile("simple.html");
+    StringWriter sw = new StringWriter();
+    m.execute(sw, new Object() {
+      String name = "Chris";
+      int value = 10000;
+
+      int taxed_value() {
+        return (int) (this.value - (this.value * 0.4));
+      }
+
+      boolean in_ca = true;
+    });
+    assertEquals(getContents(root, "simplefiltered.txt"), sw.toString());
+  }
+
+  public void testTypedSimple() throws MustacheException, IOException, ExecutionException, InterruptedException {
+    final Object scope = new Object() {
+      String name = "Chris";
+      int value = 10000;
+
+      class MyObject {
+        int taxed_value() {
+          return (int) (value - (value * 0.4));
+        }
+
+        String fred = "";
+      }
+
+      MyObject in_ca = new MyObject();
+
+      boolean test = false;
+    };
+    DefaultMustacheFactory c = new DefaultMustacheFactory(root);
+    c.setObjectHandler(new TypeCheckingHandler());
+    Mustache m = c.compile("simple.html");
+    StringWriter sw = new StringWriter();
+    m.execute(sw, scope.getClass()).flush();
+    assertEquals(getContents(root, "simpletyped.txt"), sw.toString());
+  }
+
+  protected DefaultMustacheFactory createMustacheFactory() {
     return new DefaultMustacheFactory(root);
   }
 
@@ -78,20 +142,15 @@ public class InterpreterTest extends TestCase {
   }
 
   public void testRecursionWithInheritance() throws IOException {
-    try {
-      MustacheFactory c = createMustacheFactory();
-      Mustache m = c.compile("recursion_with_inheritance.html");
-      StringWriter sw = new StringWriter();
-      m.execute(sw, new Object() {
-        Object value = new Object() {
-          boolean value = false;
-        };
-      });
-      assertEquals(getContents(root, "recursion.txt"), sw.toString());
-      fail("This has been fixed!");
-    } catch (StackOverflowError soe) {
-      // It isn't clear how to successfully do this yet.
-    }
+    MustacheFactory c = createMustacheFactory();
+    Mustache m = c.compile("recursion_with_inheritance.html");
+    StringWriter sw = new StringWriter();
+    m.execute(sw, new Object() {
+      Object value = new Object() {
+        boolean value = false;
+      };
+    });
+    assertEquals(getContents(root, "recursion.txt"), sw.toString());
   }
 
   public void testSimplePragma() throws MustacheException, IOException, ExecutionException, InterruptedException {
@@ -109,6 +168,48 @@ public class InterpreterTest extends TestCase {
       boolean in_ca = true;
     });
     assertEquals(getContents(root, "simple.txt"), sw.toString());
+  }
+
+  private class OkGenerator {
+    public boolean isItOk() {
+      return true;
+    }
+  }
+
+  public void testNestedAccessWithSimpleObjectHandler() throws IOException {
+    assertEquals(getOutput(false), getOutput(true));
+  }
+
+  private String getOutput(final boolean setObjectHandler) {
+    final DefaultMustacheFactory mustacheFactory = new DefaultMustacheFactory();
+    if (setObjectHandler) {
+      mustacheFactory.setObjectHandler(new SimpleObjectHandler());
+    }
+    final Mustache defaultMustache = mustacheFactory.compile(new StringReader("{{#okGenerator.isItOk}}{{okGenerator.isItOk}}{{/okGenerator.isItOk}}"), "Test template");
+    final Map<String, Object> params = new HashMap<String, Object>();
+    params.put("okGenerator", new OkGenerator());
+    final Writer writer = new StringWriter();
+    defaultMustache.execute(writer, params);
+    return writer.toString();
+
+  }
+
+  public void testClosingReader() {
+    final AtomicBoolean closed = new AtomicBoolean();
+    StringReader reader = new StringReader("{{test") {
+      @Override
+      public void close() {
+        closed.set(true);
+      }
+    };
+    MustacheFactory mf = new DefaultMustacheFactory();
+    try {
+      mf.compile(reader, "test");
+      fail("Should have thrown an exception");
+    } catch (MustacheException me) {
+      // The reader should be closed now
+      assertEquals(true, closed.get());
+    }
   }
 
   public void testMultipleWrappers() throws MustacheException, IOException, ExecutionException, InterruptedException {
@@ -317,7 +418,7 @@ public class InterpreterTest extends TestCase {
       public TemplateFunction i() {
         return new TemplateFunction() {
           @Override
-          public String apply(@Nullable String s) {
+          public String apply(String s) {
             return s;
           }
         };
@@ -325,6 +426,39 @@ public class InterpreterTest extends TestCase {
     });
     assertEquals("This is not interesting.", sw.toString());
   }
+
+  public void testFunctions() throws IOException {
+    MustacheFactory c = init();
+    Mustache m = c.compile(new StringReader("{{#f}}{{foo}}{{/f}}"), "test");
+    {
+      StringWriter sw = new StringWriter();
+      m.execute(sw, new Object() {
+        Function f = new Function<String, String>() {
+          @Override
+          public String apply(String s) {
+            return s.toUpperCase();
+          }
+        };
+        String foo = "bar";
+      }).flush();
+      assertEquals("BAR", sw.toString());
+    }
+    {
+      StringWriter sw = new StringWriter();
+      m.execute(sw, new Object() {
+        Function f = new TemplateFunction() {
+          @Override
+          public String apply(String s) {
+            return s.toUpperCase();
+          }
+        };
+        String foo = "bar";
+        String FOO = "baz";
+      }).flush();
+      assertEquals("baz", sw.toString());
+    }
+  }
+
 
   public void testComplex() throws MustacheException, IOException {
     StringWriter json = new StringWriter();
@@ -516,6 +650,16 @@ public class InterpreterTest extends TestCase {
     assertEquals("Value: something", sw.toString());
   }
 
+  public void testImplicitIteratorNoScope() throws IOException {
+    Mustache test = new DefaultMustacheFactory().compile(new StringReader("{{.}}"), "test");
+    StringWriter sw = new StringWriter();
+    test.execute(sw, null).close();
+    assertEquals("", sw.toString());
+    StringWriter sw2 = new StringWriter();
+    test.execute(sw2, new Object[0]).close();
+    assertEquals("", sw2.toString());
+  }
+
   public void testOutputDelimiters() {
     String template = "{{=## ##=}}{{##={{ }}=####";
     Mustache mustache = new DefaultMustacheFactory().compile(new StringReader(template), "test");
@@ -551,5 +695,4 @@ public class InterpreterTest extends TestCase {
     File file = new File("src/test/resources");
     root = new File(file, "simple.html").exists() ? file : new File("../src/test/resources");
   }
-
 }
